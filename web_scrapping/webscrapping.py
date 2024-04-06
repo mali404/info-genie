@@ -36,9 +36,9 @@ class WebScraper:
 
         home_directory = os.path.expanduser('~')
         # Create the path to the new directory
-        scrape_dir = os.path.join(home_directory, 'scrapped_data')
-        
-        
+        new_directory = os.path.join(home_directory, 'chatbot')
+        scrape_dir = os.path.join(new_directory, 'scrapped_data')
+                
         if not os.path.exists(scrape_dir):
             os.mkdir(scrape_dir)
         os.chdir(scrape_dir)
