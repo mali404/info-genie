@@ -17,9 +17,8 @@ from unstructured.cleaners.core import clean_ordered_bullets, clean_bullets, cle
 
 
 class WebScraper:
-    def __init__(self, file, use_split):
+    def __init__(self, file):
         self.file = file
-        self.use_split = use_split
      
     def scrape_select(self, url, url_hash):
         scraper = ScrapeAll(url, url_hash)
@@ -34,7 +33,11 @@ class WebScraper:
 
         df = pd.read_csv(self.file)
         urls_with_hashes = []
-        scrape_dir  = '/home/ec2-user/ITMT597/chatbot/web_scrapping/scrapped_data/'
+
+        home_directory = os.path.expanduser('~')
+        # Create the path to the new directory
+        scrape_dir = os.path.join(home_directory, 'scrapped_data')
+        
         
         if not os.path.exists(scrape_dir):
             os.mkdir(scrape_dir)
@@ -43,10 +46,7 @@ class WebScraper:
         for index, row in tqdm(df.iterrows()):
             url = row['urls']
             url_hash = hash(url)
-            """this condition requires creation of split_id column in the url csv
-            after the creation of split_id column, the default value of split_id should be 'unspecified'
-            however for urls of interest, curation is needed from the user to unset the default value"""
-
+ 
             # Extract data from the current URL and save it to a text file
             self.scrape_select(url, url_hash)
             urls_with_hashes.append([url, url_hash])
@@ -70,14 +70,15 @@ class WebScraper:
         combined_text = '\n'.join(file_contents)
 
         # Write the combined text to the output file
-        output_file_path = os.path.join(dir_path, output_file)
+        output_file_path = os.path.join(scrape_dir, output_file)
+        
         with open(output_file_path, 'w', encoding='utf-8') as output_file:
             output_file.write(combined_text)
 
-        print(f"Combined text file for {dir_name} urls saved to {output_file}")
+        print(f"Combined text file for {scrape_dir} urls saved to {output_file}")
 
         #convert urls_with_hashes to dataframe
-        df = pd.DataFrame(urls_with_hashes, columns=['urls', 'hashes', 'scrape_type'])
+        df = pd.DataFrame(urls_with_hashes, columns=['urls', 'hashes'])
         df.to_csv(f"{scrape_dir}urls_with_hashes.csv", index=False)   
 
     #IIT webpages don't have headers and footers defined via respective html tags
@@ -462,6 +463,10 @@ class ScrapeAll:
 
 
 if __name__ == '__main__':
-    scraper = WebScraper(file='/home/ec2-user/ITMT597/chatbot/web_scrapping/combined_urls.csv', use_split=True)
+    home_directory = os.path.expanduser('~')
+    # Create the path to the new directory
+    new_directory = os.path.join(home_directory, 'chatbot')
+    os.chdir(new_directory)
+    scraper = WebScraper(file='combined_urls.csv')
     scraper.scrape()
     

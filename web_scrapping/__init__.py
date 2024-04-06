@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 from tqdm import tqdm
 import os
 
+
 class Url_Crawl(RecursiveUrlLoader):
     def __init__(self, base_url, depth):
         super().__init__(url=base_url, max_depth=depth)
@@ -92,6 +93,13 @@ class MultiCrawler:
         
     def store_urls(self):
         # export to csv
+        # Get the home directory
+        home_directory = os.path.expanduser('~')
+        # Create the path to the new directory
+        new_directory = os.path.join(home_directory, 'chatbot')
+        # Create the new directory
+        os.makedirs(new_directory, exist_ok=True)
+        os.chdir(new_directory)
         pd.DataFrame(self.sorted_urls, columns=['urls']).to_csv('urls_combined.csv', index = False)
             
 if __name__ == '__main__':
@@ -102,4 +110,4 @@ if __name__ == '__main__':
     crawler.sort_all_urls()
     crawler.store_urls()
 
-
+    
