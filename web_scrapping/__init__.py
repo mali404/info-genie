@@ -108,7 +108,7 @@ class MultiCrawler:
         pd.DataFrame(self.sorted_urls, columns=['urls']).to_csv('urls_combined.csv', index = False)
             
 if __name__ == '__main__':
-    crawler = MultiCrawler([('https://www.iit.edu', 3)])   #, ('https://bulletin.iit.edu/', 3) ]) #testing the top level domain url_crawling
+    crawler = MultiCrawler([('https://www.iit.edu', 2)])   #, ('https://bulletin.iit.edu/', 3) ]) #testing the top level domain url_crawling
     #crawler = MultiCrawler([os.getenv('WEBSITE_URL'), 3])
     crawler.crawl()
     crawler.process_urls()

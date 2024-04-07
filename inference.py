@@ -34,30 +34,13 @@ class Inference_Call():
     
     # Prettifying the response
     def get_response(self, query, chain):
-        try:
-            score_threshold, docs, scores = None, None, None
+        response = chain({'query': query})
 
-            # Getting response from chain
-            response = chain({'query': query})
-            score_threshold = chain.retriever.search_kwargs.get("score_threshold")
+        # Extracting only the LLM response
+        wrapped_result = textwrap.fill(response['result'], width=100)
+        response_text = "Advisor: " + wrapped_result
 
-            if score_threshold is not None:
-                docs, scores = response['source_documents']
-                for  i, doc in enumerate(docs):
-                    doc_text = doc.page_content
-                    print(f'Retrieved chunk {i+1}: ', 'cosine similarity score: ', round(scores[i],2), '\nchunk contents: ', textwrap.fill(doc_text, width = 100), '\n')
-            
-            else:
-                docs = response['source_documents']
-                for i, doc in enumerate(docs):
-                    doc_text = doc.page_content
-                    print(f'Retrieved chunks {i+1}: ', textwrap.fill(doc_text, width = 100), '\n')
-
-            wrapped_result = textwrap.fill(response['result'], width=100)
-            print("LLM Response: ", wrapped_result)
-        except Exception as e:
-            print(e)
-            print("LLM Response: ", response['result'])
+        return response_text
 
 
     
