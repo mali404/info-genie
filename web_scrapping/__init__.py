@@ -10,8 +10,8 @@ class Url_Crawl(RecursiveUrlLoader):
         super().__init__(url=base_url, max_depth=depth)
         self.base_url = base_url
         self.max_depth = depth
-        self.prevent_outside = False # allow crawling outside the base url
-        self.tld_only = True # consider top level domain only
+        self.prevent_outside = True # allow crawling outside the base url
+        #self.tld_only = True # consider top level domain only
 
     def get_child_urls(self):
         # Initialize a set to store visited URLs
@@ -104,7 +104,7 @@ class MultiCrawler:
             
 if __name__ == '__main__':
     #crawler = MultiCrawler([('https://www.iit.edu/shwc', 5), ('https://www.iit.edu/career-services', 5), ('https://www.iit.edu/financial-aid', 5), ('https://www.iit.edu/gaa', 5), ('https://www.iit.edu/ugaa', 5) ])
-    crawler = MultiCrawler([('https://www.iit.edu', 15)]) #testing the top level domain url_crawling
+    crawler = MultiCrawler([('https://www.iit.edu', 3), ('https://bulletin.iit.edu/', 3) ]) #testing the top level domain url_crawling
     crawler.crawl()
     crawler.process_urls()
     crawler.sort_all_urls()

@@ -23,10 +23,6 @@ class WebScraper:
     def scrape_select(self, url, url_hash):
         scraper = ScrapeAll(url, url_hash)
         scraper.scrape_other()
-        scraper.clean_unstructured()
-        scraper.concatenate_strings()
-        scraper.standardize_chunks() 
-        scraper.store_as_text()
         
 
     def scrape(self):
@@ -416,57 +412,63 @@ class ScrapeAll:
         self.url_hash = url_hash
 
     def scrape_other(self):
-        elements = partition(url=self.url, strategy='auto', new_after_n_chars=1600)
-        self.chunks = chunk_by_title(elements)
+        retry_strategy = Retry(
+            total=8,  # Number of maximum retries
+            backoff_factor=1,  # Exponential backoff factor
+            status_forcelist=[500, 502, 503, 504],  # HTTP status codes to retry on
+        )
 
-    def clean_unstructured(self):
-        self.chunks_cleaned=[]
-        for i in self.chunks:
-            #have to check whether cleaning extra_whitespaces can disturb RecursiveCharacterTextSplitter
-            # check @ https://unstructured-io.github.io/unstructured/core/cleaning.html
-            #is_html() is designed to be used in ScrapeIIT class, have to change
-            #to-do: change extra_whitespace to False
-            j=clean(str(i), bullets=True, extra_whitespace=True, dashes=True)  
-            k = clean_bullets(j)
-            # Check if k is empty because clean_ordered_bullets() will throw an error if k is empty
-            if not k:  
-                l=k
-            else:
-                l = clean_ordered_bullets(k)
-            m = clean_non_ascii_chars(l)
-            self.chunks_cleaned.append(m)
-            self.chunks_cleaned = list(dict.fromkeys(self.chunks_cleaned)) #remove duplicates
+        # Create an HTTP session with retry settings
+        http = requests.Session()
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        http.mount("http://", adapter)
+        http.mount("https://", adapter)
+        try:
+            elements = partition(url=self.url, strategy='auto', new_after_n_chars=1600, request_timeout=(5, 27))
+            self.chunks = chunk_by_title(elements)
+            self.chunks_cleaned=[]
+            for i in self.chunks:
+                #have to check whether cleaning extra_whitespaces can disturb RecursiveCharacterTextSplitter
+                # check @ https://unstructured-io.github.io/unstructured/core/cleaning.html
+                #is_html() is designed to be used in ScrapeIIT class, have to change
+                #to-do: change extra_whitespace to False
+                j=clean(str(i), bullets=True, extra_whitespace=True, dashes=True)  
+                k = clean_bullets(j)
+                # Check if k is empty because clean_ordered_bullets() will throw an error if k is empty
+                if not k:  
+                    l=k
+                else:
+                    l = clean_ordered_bullets(k)
+                m = clean_non_ascii_chars(l)
+                self.chunks_cleaned.append(m)
+                self.chunks_cleaned = list(dict.fromkeys(self.chunks_cleaned)) #remove duplicates
 
-    def concatenate_strings(self):
-        self.new_list = []
-        for i in range(len(self.chunks_cleaned)):
-            if self.chunks_cleaned[i] and self.chunks_cleaned[i][0].isupper():
-                self.new_list.append(self.chunks_cleaned[i])
-            elif self.new_list:  # Check if new_list is not empty
-                self.new_list[-1] += "" + self.chunks_cleaned[i]
-        return self.new_list
+            self.new_list = []
+            for i in range(len(self.chunks_cleaned)):
+                if self.chunks_cleaned[i] and self.chunks_cleaned[i][0].isupper():
+                    self.new_list.append(self.chunks_cleaned[i])
+                elif self.new_list:  # Check if new_list is not empty
+                    self.new_list[-1] += "" + self.chunks_cleaned[i]
 
-    #creating standard chunks as per our approach for dealing with IIT chunks in scrape_iit and scrape_bulletin methods
-    def standardize_chunks(self):
-        self.standard_list = []
-        for i in self.new_list:
-            j = f"sos: {i} \nInformation Source: {self.url}"
-            self.standard_list.append(j)
-        return self.standard_list
+            self.standard_list = []
+            for i in self.new_list:
+                j = f"sos: {i} \nInformation Source: {self.url}"
+                self.standard_list.append(j)
+
+            output_file_path = f'{self.url_hash}.txt'
+            with open(output_file_path, 'w', encoding='utf-8') as output_file:
+                for item in self.standard_list:
+                    output_file.write(f"{item}\n\n")                
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error while fetching URL: {self.url}. Exception: {e}")
     
-    def store_as_text(self):
-        # Write the combined text to the output file
-        output_file_path = f'{self.url_hash}.txt'
-        with open(output_file_path, 'w', encoding='utf-8') as output_file:
-            for item in self.standard_list:
-                output_file.write(f"{item}\n\n")
-
 
 if __name__ == '__main__':
     home_directory = os.path.expanduser('~')
     # Create the path to the new directory
     new_directory = os.path.join(home_directory, 'chatbot')
+    #new_directory = r'C:\Study\Conferences\hackathon\files'
     os.chdir(new_directory)
-    scraper = WebScraper(file='combined_urls.csv')
-    scraper.scrape()
-    
+    scraper = WebScraper(file='urls_combined.csv')
+    scraper.scrape()  
