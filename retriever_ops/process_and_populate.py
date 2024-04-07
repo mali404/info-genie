@@ -2,9 +2,10 @@ import os
 import pandas as pd
 import numpy as np
 from tqdm.auto import tqdm
+import torch
 from transformers import AutoTokenizer
 from langchain.vectorstores import Chroma
-from langchain.embeddings import HuggingFaceBgeEmbeddings
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 home_directory = os.path.expanduser('~')
@@ -21,6 +22,7 @@ class TextProcessor:
                  threshold=35,
                  file_path=f'{scrape_dir}/combined_all.txt'):
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_model)
+        self.file_path = file_path
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
@@ -52,8 +54,8 @@ class TextProcessor:
         else:
             return current_text, current_tokens, i
 
-    def process_text(self, file_path):
-        with open(file_path, 'r') as file:
+    def process_text(self):
+        with open(self.file_path, 'r') as file:
             data = file.read()
         combined_data = data.split('sos: ')
         self.chunks_combined_data_redone = []
@@ -61,23 +63,31 @@ class TextProcessor:
             chunks = self.text_splitter.split_text(doc)
             for i, chunk in enumerate(chunks):
                 self.chunks_combined_data_redone.append(chunk)
-        df = pd.DataFrame({'text': self.chunks_combined_data_redone, 'NumTokens': self.bge_len(chunks_combined_data_redone)})
+        #self.chunks_combined_data_redone = [str(element) for element in self.chunks_combined_data_redone]
+        NumTokens = [self.bge_len(text) for text in self.chunks_combined_data_redone]
+        df = pd.DataFrame({'text': self.chunks_combined_data_redone, 'NumTokens': NumTokens})
         df_merged = self.merge_rows(df)
         self.chunks_combined_all_merged = df_merged.text.tolist()
         
     def create_embeddings(self):
         persist_directory = os.path.join(new_directory, 'vdb_persist_dir')
         model_name = "BAAI/bge-large-en-v1.5"
-        model_kwargs = {'device': 'cuda'}
+        #model_name = self.retriever_model
+
+        model_kwargs = {'device': 'cuda' if torch.cuda.is_available() else 'cpu'}
         encode_kwargs = {'normalize_embeddings': True} # set True to compute cosine similarity
         embedding_function = HuggingFaceBgeEmbeddings(
             model_name=model_name,
             model_kwargs=model_kwargs,
             encode_kwargs=encode_kwargs 
         )
-
         ##creating vector embeddings and storing them into separate collections based on split criteria
         Chroma.from_texts(texts=self.chunks_combined_all_merged, 
                           embedding=embedding_function, 
                           collection_name='combined_all', 
                           persist_directory=persist_directory)
+        
+if __name__ == '__main__':    
+    tp = TextProcessor()
+    tp.process_text()
+    tp.create_embeddings()
