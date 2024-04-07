@@ -9,6 +9,8 @@ from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from urllib.parse import urlparse
 
+import os
+import glob
 
 from unstructured.partition.auto import partition
 from unstructured.chunking.title import chunk_by_title
@@ -17,35 +19,49 @@ from unstructured.cleaners.core import clean_ordered_bullets, clean_bullets, cle
 
 
 class WebScraper:
-    def __init__(self, file):
+    def __init__(self, file=None):
         self.file = file
      
-    def scrape_select(self, url, url_hash):
-        scraper = ScrapeAll(url, url_hash)
-        scraper.scrape_other()
-        
+    def scrape_select(self, url=None, url_hash=None):
+        scraper = ScrapeAll(url=url, url_hash=url_hash)
+        scraper.scrape_other()        
 
     def scrape(self):
-
-        df = pd.read_csv(self.file)
-        urls_with_hashes = []
-
         home_directory = os.path.expanduser('~')
         # Create the path to the new directory
         new_directory = os.path.join(home_directory, 'chatbot')
         scrape_dir = os.path.join(new_directory, 'scrapped_data')
-                
-        if not os.path.exists(scrape_dir):
-            os.mkdir(scrape_dir)
-        os.chdir(scrape_dir)
 
-        for index, row in tqdm(df.iterrows()):
-            url = row['urls']
-            url_hash = hash(url)
- 
-            # Extract data from the current URL and save it to a text file
-            self.scrape_select(url, url_hash)
-            urls_with_hashes.append([url, url_hash])
+        if not os.path.exists(scrape_dir):
+            os.mkdir(scrape_dir)            
+
+        if self.file:
+            df = pd.read_csv(self.file)
+            urls_with_hashes = []
+            os.chdir(scrape_dir)
+
+            for index, row in tqdm(df.iterrows()):
+                url = row['urls']
+                url_hash = hash(url)
+    
+                # Extract data from the current URL and save it to a text file
+                self.scrape_select(url, url_hash)
+                urls_with_hashes.append([url, url_hash])
+            df = pd.DataFrame(urls_with_hashes, columns=['urls', 'hashes'])
+            df.to_csv(f"{scrape_dir}urls_with_hashes.csv", index=False) 
+
+        path = os.path.join(new_directory, 'uploaded_docs')
+
+        os.chdir(path)
+
+        # find all PDF files in the current directory
+        file_extensions = ['*.pdf', '*.docx', '*.doc']
+        non_url_files = [file for extension in file_extensions for file in glob.glob(extension)]
+
+        if non_url_files:
+            scraper1 = ScrapeAll(file_list = non_url_files)
+            scraper1.scrape_non_url(non_url_files)
+            
 
         #now combining all the text files into one file
         output_file = "combined_all.txt"
@@ -74,8 +90,7 @@ class WebScraper:
         print(f"Combined text file for {scrape_dir} urls saved to {output_file}")
 
         #convert urls_with_hashes to dataframe
-        df = pd.DataFrame(urls_with_hashes, columns=['urls', 'hashes'])
-        df.to_csv(f"{scrape_dir}urls_with_hashes.csv", index=False)   
+  
 
     #IIT webpages don't have headers and footers defined via respective html tags
     #rather for headers and footers specific types of divs are being used
@@ -117,9 +132,10 @@ class WebScraper:
             pass
 
 class ScrapeAll:
-    def __init__(self, url, url_hash):
+    def __init__(self, url_hash=None, url=None, file_list=None):
         self.url = url
         self.url_hash = url_hash
+        self.file_list = file_list
 
     def scrape_other(self):
         retry_strategy = Retry(
@@ -172,13 +188,48 @@ class ScrapeAll:
 
         except requests.exceptions.RequestException as e:
             print(f"Error while fetching URL: {self.url}. Exception: {e}")
+
+    def scrape_non_url(self, non_url_files):
+
+        for non_url in non_url_files:
+            with open(non_url, 'rb') as f:
+                elements = partition(file=f, strategy='auto', new_after_n_chars=1600, request_timeout=(5, 27))
+            self.chunks = chunk_by_title(elements)
+            self.chunks_cleaned=[]
+            for i in self.chunks:
+                j=clean(str(i), bullets=True, extra_whitespace=True, dashes=True)  
+                k = clean_bullets(j)
+                if not k:  
+                    l=k
+                else:
+                    l = clean_ordered_bullets(k)
+                m = clean_non_ascii_chars(l)
+                self.chunks_cleaned.append(m)
+                self.chunks_cleaned = list(dict.fromkeys(self.chunks_cleaned)) #remove duplicates
+
+            self.new_list = []
+            for i in range(len(self.chunks_cleaned)):
+                if self.chunks_cleaned[i] and self.chunks_cleaned[i][0].isupper():
+                    self.new_list.append(self.chunks_cleaned[i])
+                elif self.new_list:  # Check if new_list is not empty
+                    self.new_list[-1] += "" + self.chunks_cleaned[i]
+
+            home_directory = os.path.expanduser('~')
+            # Create the path to the new directory
+            new_directory = os.path.join(home_directory, 'chatbot')
+            scrape_dir = os.path.join(new_directory, 'scrapped_data')
+
+
+            output_file_path = f'{scrape_dir}/{non_url}.txt'
+            with open(output_file_path, 'w', encoding='utf-8') as output_file:
+                for item in self.new_list:
+                    output_file.write(f"{item}\n\n")  
     
 
 if __name__ == '__main__':
     home_directory = os.path.expanduser('~')
     # Create the path to the new directory
     new_directory = os.path.join(home_directory, 'chatbot')
-    #new_directory = r'C:\Study\Conferences\hackathon\files'
     os.chdir(new_directory)
     scraper = WebScraper(file='urls_combined.csv')
     scraper.scrape()  

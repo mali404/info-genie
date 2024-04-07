@@ -72,7 +72,8 @@ class MultiCrawler:
         have duplicate content. One in html form and other in pdf form.
         Here we are doing 2 things mainly:
         1. remove the pdf urls with duplicate content
-        2. remove the duplicate urls that result after the first step"""
+        2. remove the duplicate urls that result after the first step
+        3. remove urls with .png, .ico, .svg, .webmanifest extensions"""
 
         # performing step 1
         processed_urls_1 = (
@@ -82,13 +83,17 @@ class MultiCrawler:
             for url in self.all_urls
         )
         # performing step 2
-        self.processed_urls_2 = set(url.rstrip('/') for url in processed_urls_1)
+        processed_urls_2 = set(url.rstrip('/') for url in processed_urls_1)
+
+        # performing step 3
+        unwanted_extensions = ['.png', '.css', '.ico', '.svg', '.webmanifest']
+        self.processed_urls_3 = set(url for url in processed_urls_2 if not any(url.endswith(ext) for ext in unwanted_extensions))
         
         return self
     
     # sort the urls in alphabetical order
     def sort_all_urls(self):        
-        self.sorted_urls = sorted(self.processed_urls_2, key=lambda x: urlparse(x))
+        self.sorted_urls = sorted(self.processed_urls_3, key=lambda x: urlparse(x))
         return self.sorted_urls 
         
     def store_urls(self):
@@ -103,8 +108,8 @@ class MultiCrawler:
         pd.DataFrame(self.sorted_urls, columns=['urls']).to_csv('urls_combined.csv', index = False)
             
 if __name__ == '__main__':
-    #crawler = MultiCrawler([('https://www.iit.edu/shwc', 5), ('https://www.iit.edu/career-services', 5), ('https://www.iit.edu/financial-aid', 5), ('https://www.iit.edu/gaa', 5), ('https://www.iit.edu/ugaa', 5) ])
-    crawler = MultiCrawler([('https://www.iit.edu', 3), ('https://bulletin.iit.edu/', 3) ]) #testing the top level domain url_crawling
+    crawler = MultiCrawler([('https://www.iit.edu', 3)])   #, ('https://bulletin.iit.edu/', 3) ]) #testing the top level domain url_crawling
+    #crawler = MultiCrawler([os.getenv('WEBSITE_URL'), 3])
     crawler.crawl()
     crawler.process_urls()
     crawler.sort_all_urls()

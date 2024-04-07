@@ -1,68 +1,57 @@
-import os
+from inference import Inference_Call
+from retriever_ops.process_and_populate import TextProcessor
+from web_scrapping import Url_Crawl, MultiCrawler
+from web_scrapping.webscrapping import WebScraper
 
+import os
 import pandas as pd
 import numpy as np
-import textwrap
+from tqdm.auto import tqdm
+import torch
+from transformers import AutoTokenizer
+from langchain.vectorstores import Chroma
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-from transformers import BertTokenizer
 
 from langchain.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceBgeEmbeddings
 from langchain.llms import VLLM, Ollama
-from langchain.chains import RetrievalQA
 from langchain import PromptTemplate
-
-from langchain.callbacks import StdOutCallbackHandler
 
 
 import chromadb
 
-class Inference_Call():
-    
-    def __init__(self, encoder_llm = "mistralai/Mistral-7B-Instruct-v0.2"):
-        self.encoder_llm = encoder_llm
+__all__ = ['Inference_Call', 'Url_Crawl', 'MultiCrawler', 'WebScraper']
+def main():    
+    ##__init__ constructor ##
+    base_url= 'https://www.northwestern.edu/'
+    if base_url:
+        crawler = MultiCrawler([(base_url, 3)])   #, ('https://bulletin.iit.edu/', 3) ]) #testing the top level domain url_crawling
+        #crawler = MultiCrawler([os.getenv('WEBSITE_URL'), 3])
+        crawler.crawl()
+        crawler.process_urls()
+        crawler.sort_all_urls()
+        crawler.store_urls()
 
+        ## WebScrapping.py ##
+        home_directory = os.path.expanduser('~')
+        # Create the path to the new directory
+        new_directory = os.path.join(home_directory, 'chatbot')
+        #new_directory = r'C:\Study\Conferences\hackathon\files'
+        os.chdir(new_directory)
 
-    def load_qa_chain(self, retriever, llm, prompt):
-        return RetrievalQA.from_chain_type(
-            llm=llm,
-            retriever=retriever, # here we are using the vectorstore as a retriever
-            chain_type="stuff",
-            return_source_documents=True, # including source documents in output
-            chain_type_kwargs={'prompt': prompt, "callbacks" : [StdOutCallbackHandler()], 'document_separator':'\n\nOther context: '}
-            )
-    
-    # Prettifying the response
-    def get_response(self, query, chain):
-        try:
-            score_threshold, docs, scores = None, None, None
+        scraper = WebScraper(file='urls_combined.csv')
+    else:
+        scraper = WebScraper()        
+    scraper.scrape()  
 
-            # Getting response from chain
-            response = chain({'query': query})
-            score_threshold = chain.retriever.search_kwargs.get("score_threshold")
+    ## process_and_populate.py ##
+    tp = TextProcessor()
+    tp.process_text()
+    tp.create_embeddings()
 
-            if score_threshold is not None:
-                docs, scores = response['source_documents']
-                for  i, doc in enumerate(docs):
-                    doc_text = doc.page_content
-                    print(f'Retrieved chunk {i+1}: ', 'cosine similarity score: ', round(scores[i],2), '\nchunk contents: ', textwrap.fill(doc_text, width = 100), '\n')
-            
-            else:
-                docs = response['source_documents']
-                for i, doc in enumerate(docs):
-                    doc_text = doc.page_content
-                    print(f'Retrieved chunks {i+1}: ', textwrap.fill(doc_text, width = 100), '\n')
-
-            wrapped_result = textwrap.fill(response['result'], width=100)
-            print("LLM Response: ", wrapped_result)
-        except Exception as e:
-            print(e)
-            print("LLM Response: ", response['result'])
-
-
-    
-
-if __name__ == '__main__':
+    ## main.py ##
     inference = Inference_Call()
     llm0 = Ollama(model="mistral:v0.2", temperature=0)
     """llm1 = VLLM(model="mistralai/Mistral-7B-Instruct-v0.2",
@@ -75,7 +64,7 @@ if __name__ == '__main__':
                 gpu_memory_utilization=0.75, 
                 vllm_kwargs = {"enable_lora":True, 'callbacks':[StdOutCallbackHandler()]}           
             )"""
-    
+
     template1 = """<s> [INST] You are an academic advisor for Illinois Institute of Technology. \
     You have to answer the user's queries only on the basis context provided to you. \
     You have to use only relevant parts of the context to answer the user's queries. \
@@ -91,9 +80,9 @@ if __name__ == '__main__':
 
     home_directory = os.path.expanduser('~')
     new_directory = os.path.join(home_directory, 'chatbot')
-    scrape_dir = os.path.join(new_directory, 'scrapped_data')
+    #scrape_dir = os.path.join(new_directory, 'scrapped_data')
     DB_DIR_bge_large = os.path.join(new_directory, 'vdb_persist_dir')
-    
+
     #model bge_large
     model_name = "BAAI/bge-large-en-v1.5"
     model_kwargs = {'device': 'cuda'}
@@ -114,7 +103,7 @@ if __name__ == '__main__':
     db_bge_large_combined_all = Chroma(
         collection_name="combined_all",
         persist_directory=DB_DIR_bge_large,
-        client_settings=client_settings_bge_large,
+        #client_settings=client_settings_bge_large,
         embedding_function=embedding_function_bge_large,
     )
 
@@ -124,4 +113,7 @@ if __name__ == '__main__':
 
     chain0 = inference.load_qa_chain(retriever1, llm0, prompt)
 
-    inference.get_response('I am an first year masters in data analytics and management. Which courses should I take?', chain0)
+    inference.get_response('What is the purpose of MLH?', chain0)
+
+if __name__ == '__main__':
+    main()
