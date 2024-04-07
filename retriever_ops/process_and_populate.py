@@ -7,8 +7,19 @@ from langchain.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceBgeEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
+home_directory = os.path.expanduser('~')
+new_directory = os.path.join(home_directory, 'chatbot')
+scrape_dir = os.path.join(new_directory, 'scrapped_data')
+
+        
+
 class TextProcessor:
-    def __init__(self, tokenizer_model='BAAI/bge-large-en-v1.5', chunk_size=480, chunk_overlap=90, threshold=35):
+    def __init__(self, 
+                 tokenizer_model='BAAI/bge-large-en-v1.5', 
+                 chunk_size=480, 
+                 chunk_overlap=90, 
+                 threshold=35,
+                 file_path=f'{scrape_dir}/combined_all.txt'):
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_model)
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
@@ -45,12 +56,28 @@ class TextProcessor:
         with open(file_path, 'r') as file:
             data = file.read()
         combined_data = data.split('sos: ')
-        chunks_combined_data_redone = []
+        self.chunks_combined_data_redone = []
         for doc in tqdm(combined_data):
             chunks = self.text_splitter.split_text(doc)
             for i, chunk in enumerate(chunks):
-                chunks_combined_data_redone.append(chunk)
-        df = pd.DataFrame({'text': chunks_combined_data_redone, 'NumTokens': self.bge_len(chunks_combined_data_redone)})
+                self.chunks_combined_data_redone.append(chunk)
+        df = pd.DataFrame({'text': self.chunks_combined_data_redone, 'NumTokens': self.bge_len(chunks_combined_data_redone)})
         df_merged = self.merge_rows(df)
-        chunks_combined_all_merged = df_merged.text.tolist()
-        return chunks_combined_all_merged
+        self.chunks_combined_all_merged = df_merged.text.tolist()
+        
+    def create_embeddings(self):
+        persist_directory = os.path.join(new_directory, 'vdb_persist_dir')
+        model_name = "BAAI/bge-large-en-v1.5"
+        model_kwargs = {'device': 'cuda'}
+        encode_kwargs = {'normalize_embeddings': True} # set True to compute cosine similarity
+        embedding_function = HuggingFaceBgeEmbeddings(
+            model_name=model_name,
+            model_kwargs=model_kwargs,
+            encode_kwargs=encode_kwargs 
+        )
+
+        ##creating vector embeddings and storing them into separate collections based on split criteria
+        Chroma.from_texts(texts=self.chunks_combined_all_merged, 
+                          embedding=embedding_function, 
+                          collection_name='combined_all', 
+                          persist_directory=persist_directory)
