@@ -1,6 +1,7 @@
 import streamlit as st
 from langchain.llms import Ollama
 from langchain.embeddings import HuggingFaceBgeEmbeddings
+from pathlib import Path
 import subprocess
 import os
 
@@ -52,7 +53,9 @@ def find_suitable_models(gpu_memory):
 
 def save_uploaded_file(uploaded_file):
     if uploaded_file is not None:
-        save_path = "C:\\Users\\navan\\Desktop\\Research_Project\\Uploaded_Documents"
+        # Get the home directory of the current user
+        home_dir = Path.home()
+        save_path = home_dir / "Desktop" / "Research_Project" / "Uploaded_Documents"
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         full_path = os.path.join(save_path, uploaded_file.name)
@@ -68,7 +71,7 @@ def launch_rag_solution(retriever_model, llm_model, website_url, document_path, 
     os.environ['DOCUMENT_PATH'] = document_path
     os.environ['URL_DEPTH'] = str(url_depth) 
 
-    subprocess.run(["streamlit", "run", "C:\\Users\\navan\\Desktop\\Research_Project\\EC-2 backups\\EC-2 backups\\small_machine\\misc\\files\\MLH_Hack_RAG_Solution.py"])
+    subprocess.run(["streamlit", "run", "main.py"])
 
 def main():
     st.title("Info Genie RAG Workbench 🖥️🧞")
