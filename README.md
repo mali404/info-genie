@@ -1,4 +1,4 @@
-## Welcome to Info Genie! 🧞💻
+# Welcome to Info Genie! 🧞💻
 
 Info Genie is an innovative software solution designed to optimize your experience with large language models (LLMs) based on your specific hardware capabilities. Here's how it works:
 
