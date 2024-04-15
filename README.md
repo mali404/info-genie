@@ -13,3 +13,6 @@ Custom AI Chatbot Deployment:
 Using the provided parameters, the system deploys a Retrieval-Augmented Generation (RAG) system. This system crafts a custom AI chatbot specifically for your website or documents.
 Once deployed, this AI chatbot can dynamically interact with users in a conversational manner, effectively communicating all the pertinent information contained in your website or documents.
 With Info Genie, transform how information is delivered and consumed through tailored AI solutions that leverage your existing resources. Experience a new era of interactive and personalized communication today!
+
+![genie-lamp](https://github.com/mali404/hackathon_mlh/assets/83540953/1f904735-532f-4b8a-aa62-ccc5719fa0ac)
+
