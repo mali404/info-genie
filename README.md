@@ -2,8 +2,6 @@
 
 Info Genie is an innovative software solution designed to optimize your experience with large language models (LLMs) based on your specific hardware capabilities. Here's how it works:
 
-Hardware Specification Analysis:
-
 Upon starting, Info Genie will prompt you to enter details about your hardware, such as GPU memory. This information allows our system to recommend the most suitable LLMs for your setup, ensuring an efficient and effective operation.
 Model and Content Integration:
 
