@@ -8,8 +8,8 @@ from langchain.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-home_directory = os.path.expanduser('~')
-new_directory = os.path.join(home_directory, 'chatbot')
+current_directory = os.getcwd()
+new_directory = os.path.join(current_directory, 'chatbot')
 scrape_dir = os.path.join(new_directory, 'scrapped_data')
 
         

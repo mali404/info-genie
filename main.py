@@ -41,9 +41,9 @@ def pre():
         crawler.store_urls()
 
         ## WebScrapping.py ##
-        home_directory = os.path.expanduser('~')
+        current_directory = os.getcwd()
         # Create the path to the new directory
-        new_directory = os.path.join(home_directory, 'chatbot')
+        new_directory = os.path.join(current_directory, 'chatbot')
         os.chdir(new_directory)
 
         scraper = WebScraper(file='urls_combined.csv')
@@ -74,8 +74,8 @@ def infer():
 
     prompt = PromptTemplate.from_template(template1)
 
-    home_directory = os.path.expanduser('~')
-    new_directory = os.path.join(home_directory, 'chatbot')
+    current_directory = os.getcwd()
+    new_directory = os.path.join(current_directory, 'chatbot')
     #scrape_dir = os.path.join(new_directory, 'scrapped_data')
     DB_DIR_bge_large = os.path.join(new_directory, 'vdb_persist_dir')
 

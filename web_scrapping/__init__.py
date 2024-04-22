@@ -98,10 +98,10 @@ class MultiCrawler:
         
     def store_urls(self):
         # export to csv
-        # Get the home directory
-        home_directory = os.path.expanduser('~')
+        # Get the current working directory
+        current_directory = os.getcwd()
         # Create the path to the new directory
-        new_directory = os.path.join(home_directory, 'chatbot')
+        new_directory = os.path.join(current_directory, 'chatbot')
         # Create the new directory
         os.makedirs(new_directory, exist_ok=True)
         os.chdir(new_directory)

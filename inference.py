@@ -72,8 +72,8 @@ if __name__ == '__main__':
 
     prompt = PromptTemplate.from_template(template1)
 
-    home_directory = os.path.expanduser('~')
-    new_directory = os.path.join(home_directory, 'chatbot')
+    current_directory = os.getcwd()
+    new_directory = os.path.join(current_directory, 'chatbot')
     scrape_dir = os.path.join(new_directory, 'scrapped_data')
     DB_DIR_bge_large = os.path.join(new_directory, 'vdb_persist_dir')
     

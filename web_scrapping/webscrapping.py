@@ -27,9 +27,9 @@ class WebScraper:
         scraper.scrape_other()        
 
     def scrape(self):
-        home_directory = os.path.expanduser('~')
+        current_directory = os.getcwd()
         # Create the path to the new directory
-        new_directory = os.path.join(home_directory, 'chatbot')
+        new_directory = os.path.join(current_directory, 'chatbot')
         scrape_dir = os.path.join(new_directory, 'scrapped_data')
 
         if not os.path.exists(scrape_dir):
@@ -214,9 +214,9 @@ class ScrapeAll:
                 elif self.new_list:  # Check if new_list is not empty
                     self.new_list[-1] += "" + self.chunks_cleaned[i]
 
-            home_directory = os.path.expanduser('~')
+            current_directory = os.getcwd()
             # Create the path to the new directory
-            new_directory = os.path.join(home_directory, 'chatbot')
+            new_directory = os.path.join(current_directory, 'chatbot')
             scrape_dir = os.path.join(new_directory, 'scrapped_data')
 
 
@@ -227,9 +227,9 @@ class ScrapeAll:
     
 
 if __name__ == '__main__':
-    home_directory = os.path.expanduser('~')
+    current_directory = os.getcwd()
     # Create the path to the new directory
-    new_directory = os.path.join(home_directory, 'chatbot')
+    new_directory = os.path.join(current_directory, 'chatbot')
     os.chdir(new_directory)
     scraper = WebScraper(file='urls_combined.csv')
     scraper.scrape()  
