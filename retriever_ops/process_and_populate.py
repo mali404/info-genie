@@ -5,7 +5,7 @@ from tqdm.auto import tqdm
 import torch
 from transformers import AutoTokenizer
 from langchain.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceBgeEmbeddings
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings, HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 current_directory = os.getcwd()
@@ -16,7 +16,7 @@ scrape_dir = os.path.join(new_directory, 'scrapped_data')
 
 class TextProcessor:
     def __init__(self, 
-                 tokenizer_model='BAAI/bge-large-en-v1.5', 
+                 tokenizer_model='BAAI/bge-large-en-v1.5', #most of these need to be set as variables
                  chunk_size=480, 
                  chunk_overlap=90, 
                  threshold=35,
@@ -76,7 +76,7 @@ class TextProcessor:
 
         model_kwargs = {'device': 'cuda' if torch.cuda.is_available() else 'cpu'}
         encode_kwargs = {'normalize_embeddings': True} # set True to compute cosine similarity
-        embedding_function = HuggingFaceBgeEmbeddings(
+        embedding_function = HuggingFaceEmbeddings(
             model_name=model_name,
             model_kwargs=model_kwargs,
             encode_kwargs=encode_kwargs 

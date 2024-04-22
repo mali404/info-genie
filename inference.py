@@ -22,23 +22,29 @@ class Inference_Call():
     def __init__(self, encoder_llm = "mistralai/Mistral-7B-Instruct-v0.2"):
         self.encoder_llm = encoder_llm
 
-
     def load_qa_chain(self, retriever, llm, prompt):
         return RetrievalQA.from_chain_type(
             llm=llm,
             retriever=retriever, # here we are using the vectorstore as a retriever
             chain_type="stuff",
             return_source_documents=True, # including source documents in output
-            chain_type_kwargs={'prompt': prompt, "callbacks" : [StdOutCallbackHandler()], 'document_separator':'\n\nOther context: '}
+            chain_type_kwargs={'prompt': prompt, 'document_separator':'\n\nOther context: '} # removed "callbacks" : [StdOutCallbackHandler()] for the time being
             )
     
     # Prettifying the response
     def get_response(self, query, chain):
         response = chain({'query': query})
 
-        # Extracting only the LLM response
-        wrapped_result = textwrap.fill(response['result'], width=100)
+        docs = response['source_documents']
+        for i, doc in enumerate(docs):
+            doc_text = doc.page_content
+            print(f'Retrieved chunks {i+1}: ', textwrap.fill(doc_text, width=130), '\n')
+
+        #wrapped_chunks = response['source_documents']
+        wrapped_result = textwrap.fill(response['result'], width=130)
         response_text = "Advisor: " + wrapped_result
+
+        print("LLM Response: ", wrapped_result)
 
         return response_text
 

@@ -184,3 +184,6 @@ checkpoint
 
 #one-note
 *.onetoc2
+
+#vdb file
+*.sqlite3
