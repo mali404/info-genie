@@ -23,14 +23,13 @@ class WebScraper:
         self.file = file
      
     def scrape_select(self, url=None, url_hash=None):
-        scraper = ScrapeAll(url=url, url_hash=url_hash)
-        scraper.scrape_other()        
+        scraper_url = ScrapeAll(url=url, url_hash=url_hash)
+        scraper_url.scrape_other()        
 
     def scrape(self):
         current_directory = os.getcwd()
-        # Create the path to the new directory
-        new_directory = os.path.join(current_directory, 'chatbot')
-        scrape_dir = os.path.join(new_directory, 'scrapped_data')
+        #here cwd is already chatobt
+        scrape_dir = os.path.join(current_directory, 'scrapped_data') 
 
         if not os.path.exists(scrape_dir):
             os.mkdir(scrape_dir)            
@@ -51,6 +50,9 @@ class WebScraper:
             df.to_csv(f"{scrape_dir}urls_with_hashes.csv", index=False) 
 
         path = os.path.join(new_directory, 'uploaded_docs')
+        
+        if not os.path.exists(path):
+            os.mkdir(path) 
 
         os.chdir(path)
 
@@ -59,9 +61,8 @@ class WebScraper:
         non_url_files = [file for extension in file_extensions for file in glob.glob(extension)]
 
         if non_url_files:
-            scraper1 = ScrapeAll(file_list = non_url_files)
-            scraper1.scrape_non_url(non_url_files)
-            
+            scraper_no_url = ScrapeAll(file_list = non_url_files)
+            scraper_no_url.scrape_non_url(non_url_files)            
 
         #now combining all the text files into one file
         output_file = "combined_all.txt"
@@ -91,7 +92,6 @@ class WebScraper:
 
         #convert urls_with_hashes to dataframe
   
-
     #IIT webpages don't have headers and footers defined via respective html tags
     #rather for headers and footers specific types of divs are being used
     #in such a scenario unstructured's skip_header_footers does not work, hence this:   
@@ -130,7 +130,6 @@ class WebScraper:
             self.new_list = new_list[1:-1]
         else:
             pass
-
 class ScrapeAll:
     def __init__(self, url_hash=None, url=None, file_list=None):
         self.url = url
@@ -218,7 +217,6 @@ class ScrapeAll:
             # Create the path to the new directory
             new_directory = os.path.join(current_directory, 'chatbot')
             scrape_dir = os.path.join(new_directory, 'scrapped_data')
-
 
             output_file_path = f'{scrape_dir}/{non_url}.txt'
             with open(output_file_path, 'w', encoding='utf-8') as output_file:
