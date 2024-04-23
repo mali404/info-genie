@@ -1,4 +1,5 @@
 import os
+import glob
 import pandas as pd
 from tqdm import tqdm
 
@@ -9,8 +10,6 @@ from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from urllib.parse import urlparse
 
-import os
-import glob
 
 from unstructured.partition.auto import partition
 from unstructured.chunking.title import chunk_by_title
@@ -24,7 +23,7 @@ class WebScraper:
      
     def scrape_select(self, url=None, url_hash=None):
         scraper_url = ScrapeAll(url=url, url_hash=url_hash)
-        scraper_url.scrape_other()        
+        scraper_url.scrape_url()        
 
     def scrape(self):
         current_directory = os.getcwd()
@@ -92,10 +91,6 @@ class WebScraper:
 
         #convert urls_with_hashes to dataframe
   
-    #IIT webpages don't have headers and footers defined via respective html tags
-    #rather for headers and footers specific types of divs are being used
-    #in such a scenario unstructured's skip_header_footers does not work, hence this:   
-    # to do
     def is_html(self, url):
     #Returns True if the response content is HTML, False otherwise.
         retry_strategy = Retry(
@@ -124,6 +119,7 @@ class WebScraper:
                 return False
         except requests.exceptions.RequestException as e:
             print(f"Error while fetching URL: {url}. Exception: {e}")
+
     
     def optional_rm_headers_footers(self, url, new_list):
         if self.is_html(url):
@@ -136,7 +132,7 @@ class ScrapeAll:
         self.url_hash = url_hash
         self.file_list = file_list
 
-    def scrape_other(self):
+    def scrape_url(self):
         retry_strategy = Retry(
             total=8,  # Number of maximum retries
             backoff_factor=1,  # Exponential backoff factor
@@ -188,6 +184,9 @@ class ScrapeAll:
         except requests.exceptions.RequestException as e:
             print(f"Error while fetching URL: {self.url}. Exception: {e}")
 
+        except ValueError as e:
+            print(f"Error while fetching URL: {self.url}. Exception: {e}")
+
     def scrape_non_url(self, non_url_files):
 
         for non_url in non_url_files:
@@ -221,8 +220,7 @@ class ScrapeAll:
             output_file_path = f'{scrape_dir}/{non_url}.txt'
             with open(output_file_path, 'w', encoding='utf-8') as output_file:
                 for item in self.new_list:
-                    output_file.write(f"{item}\n\n")  
-    
+                    output_file.write(f"{item}\n\n")
 
 if __name__ == '__main__':
     current_directory = os.getcwd()
@@ -230,4 +228,4 @@ if __name__ == '__main__':
     new_directory = os.path.join(current_directory, 'chatbot')
     os.chdir(new_directory)
     scraper = WebScraper(file='urls_combined.csv')
-    scraper.scrape()  
+    scraper.scrape()
