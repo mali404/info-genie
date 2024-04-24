@@ -27,7 +27,7 @@ class WebScraper:
 
     def scrape(self):
         current_directory = os.getcwd()
-        #here cwd is already chatobt
+        #here cwd is already chatbot
         scrape_dir = os.path.join(current_directory, 'scrapped_data') 
 
         if not os.path.exists(scrape_dir):
@@ -212,14 +212,20 @@ class ScrapeAll:
                 elif self.new_list:  # Check if new_list is not empty
                     self.new_list[-1] += "" + self.chunks_cleaned[i]
 
-            current_directory = os.getcwd()
+            self.standard_list = []
+            for i in self.new_list:
+                j = f"sos: {i}"
+                self.standard_list.append(j)
+            
+            chatbot_dir = os.path.dirname(os.getcwd())
             # Create the path to the new directory
-            new_directory = os.path.join(current_directory, 'chatbot')
-            scrape_dir = os.path.join(new_directory, 'scrapped_data')
+            scrape_dir = os.path.join(chatbot_dir, 'scrapped_data')
+            #get the name of the file without the extension
+            base_name = os.path.splitext(os.path.basename(non_url))[0]            
+            output_file_path = f'{scrape_dir}/{base_name}.txt'
 
-            output_file_path = f'{scrape_dir}/{non_url}.txt'
             with open(output_file_path, 'w', encoding='utf-8') as output_file:
-                for item in self.new_list:
+                for item in self.standard_list:
                     output_file.write(f"{item}\n\n")
 
 if __name__ == '__main__':

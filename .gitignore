@@ -178,6 +178,7 @@ checkpoint
 
 #text files because of webscraping
 *.txt
+*.docx
 
 #notebooks
 *.ipynb
