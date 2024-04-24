@@ -176,9 +176,12 @@ checkpoint
 *.csv
 *.tsv
 
+
 #text files because of webscraping
 *.txt
 *.docx
+*.pptx
+*.pdf
 
 #notebooks
 *.ipynb
