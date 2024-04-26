@@ -56,7 +56,7 @@ class WebScraper:
         os.chdir(path)
 
         # find all PDF files in the current directory
-        file_extensions = ['*.pdf', '*.docx', '*.doc', "*.pptx", "*.csv", "*.epub"]
+        file_extensions = ['*.pdf', '*.docx', '*.doc', "*.pptx", "*.csv", "*.epub", "*.md", "*.xlsx"]
         non_url_files = [file for extension in file_extensions for file in glob.glob(extension)]
 
         if non_url_files:
