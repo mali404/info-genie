@@ -183,6 +183,12 @@ checkpoint
 *.pptx
 *.pdf
 *.epub
+*.rst
+*.rtf
+*.ppt
+*.odt
+*.msg
+
 
 #notebooks
 *.ipynb
