@@ -29,7 +29,7 @@ class TextProcessor:
             length_function=self.bge_len,
             separators = ['\n\n', '\n', ' ', '']
         )
-        self.threshold = threshold
+        self.threshold = threshold #this means if number of tokens for a chunk is less than this, It'll be merged with the next chunk
 
     def bge_len(self, text):
         tokens = self.tokenizer.encode(text)
@@ -40,17 +40,17 @@ class TextProcessor:
         new_tokens = []
         i = 0
         while i < len(df):
-            merged_text, merged_tokens, i = self.merge_until_threshold(df, i, '', 0, self.threshold)
+            merged_text, merged_tokens, i = self.merge_until_threshold(df, i, '', 0)
             new_text.append(merged_text)
             new_tokens.append(merged_tokens)
         new_df = pd.DataFrame({'text': new_text, 'NumTokens': new_tokens})
         return new_df
 
-    def merge_until_threshold(self, df, i, current_text, current_tokens, threshold):
-        if i < len(df) and current_tokens < threshold:
+    def merge_until_threshold(self, df, i, current_text, current_tokens):
+        if i < len(df) and current_tokens < self.threshold:
             current_text += '\n' + df.at[i, 'text'] if current_text else df.at[i, 'text']
             current_tokens += df.at[i, 'NumTokens']
-            return self.merge_until_threshold(df, i+1, current_text, current_tokens, threshold)
+            return self.merge_until_threshold(df, i+1, current_text, current_tokens)
         else:
             return current_text, current_tokens, i
 

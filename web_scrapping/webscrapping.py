@@ -120,7 +120,7 @@ class WebScraper:
         except requests.exceptions.RequestException as e:
             print(f"Error while fetching URL: {url}. Exception: {e}")
 
-    
+ 
     def optional_rm_headers_footers(self, url, new_list):
         if self.is_html(url):
             self.new_list = new_list[1:-1]
